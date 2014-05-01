@@ -39,7 +39,6 @@
 #include <errno.h>
 #include <gdbm.h>
 
-#include "config.h"
 #include "pam_shield.h"
 
 #pragma GCC visibility push(hidden)

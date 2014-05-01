@@ -17,40 +17,37 @@ Building pam_shield
 -------------------
 
 Pre-reqs on a Debian or Ubuntu-like system:
+	cmake
 	libpam0g-dev
 	libgdbm-dev
 
 Pre-reqs on a RedHat or Fedora-like system:
+    cmake
     pam-devel
     gdbm-devel
 
 
-pam_shield contains a standard GNU configure script; basic setup:
-./configure
-make
-make install
+pam_shield uses the CMake build system;
 
-If using a git checkout instead of a tarball, use:
-autoreconf -i
-first.
+$ git clone -b cmake https://github.com/h0tw1r3/pam_shield.git
+$ cmake -DCMAKE_INSTALL_PREFIX=/usr pam_shield
+$ make
+$ make install
 
 pam_shield consists of:
 - one PAM module:   /lib/security/pam_shield.so
                  or /lib64/security/pam_shield.so on 64-bit systems
-- one binary:       /usr/sbin/shield-purge
-- three scripts:    /usr/sbin/shield-trigger
-                    /usr/sbin/shield-trigger-iptables
-                    /usr/sbin/shield-trigger-ufw
+- one binary:       <prefix>/sbin/shield-purge
+- three scripts:    <prefix>/sbin/shield-trigger
+                    <prefix>/sbin/shield-trigger-iptables
+                    <prefix>/shield-trigger-ufw
 - one cron script:  /etc/cron.daily/pam_shield
 - one config file:  /etc/security/shield.conf
 - a gdbm database:  /var/lib/pam_shield/db
-- PAM config:       /usr/share/pam-config/pam_shield
+- PAM config:       <prefix>/share/pam-config/pam_shield
 
 Type 'make' to build the software.
-Do a 'make install' as root to install the software. Note that, by default,
-it will install into /usr rather than /usr/local (use the --prefix option
-to configure to change this.)
-You may do 'make uninstall' to remove the software.
+Do a 'make install' as root to install the software.
 
 
 Configuring pam_shield
