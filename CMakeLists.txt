@@ -56,6 +56,8 @@ target_link_libraries(shield-purge ${GDBM_LIBRARIES})
 
 file(GLOB trigger_SCRIPTS "${CMAKE_SOURCE_DIR}/scripts/*")
 
+get_filename_component(dbdir ${DEFAULT_DBFILE} PATH)
+
 install(TARGETS pam_shield DESTINATION ${PAM_MODULE_DIR}/)
 install(TARGETS shield-purge DESTINATION sbin/)
 install(PROGRAMS ${trigger_SCRIPTS} DESTINATION sbin/)
@@ -64,3 +66,4 @@ install(DIRECTORY man/ DESTINATION "${datarootdir}/man/man5" FILES_MATCHING PATT
 install(DIRECTORY pam-configs DESTINATION "${datarootdir}")
 install(DIRECTORY cron.daily/ DESTINATION "${sysconfdir}/cron.daily")
 install(FILES shield.conf DESTINATION "${sysconfdir}/security/" COMPONENT config)
+install(DIRECTORY DESTINATION "${dbdir}")
