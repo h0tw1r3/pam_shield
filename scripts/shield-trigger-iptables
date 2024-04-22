@@ -1,6 +1,6 @@
-#! /bin/sh
+#!/bin/sh
 #
-#	shield-trigger-iptables
+#   shield-trigger-iptables
 #
 #   pam_shield 0.9.7
 #   Copyright (C) 2007-2012  Walter de Jong <walter@heiho.net>
@@ -22,59 +22,59 @@
 #
 
 run_iptables() {
-#
-#	louzy detection of IPv4 or IPv6 address
-#
-	IPT=$(echo "$2" | sed 's/[0-9\.]//g')
-	if [ -z "$IPT" ]
-	then
-		IPT=iptables
-	else
-		IPT=ip6tables
-	fi
+    #
+    # louzy detection of IPv4 or IPv6 address
+    #
+    IPT=$(echo "$2" | sed 's/[0-9\.]//g')
+    if [ -z "$IPT" ]
+    then
+        IPT=iptables
+    else
+        IPT=ip6tables
+    fi
 
-#	switch -A for iptables to -I
-	if [ "$1" = "-A" ]
-	then
-		TASK="-I"
-	else
-		TASK=$1
-	fi
+# switch -A for iptables to -I
+if [ "$1" = "-A" ]
+then
+    TASK="-I"
+else
+    TASK=$1
+fi
 
-#	check to see if pam_shield chain exists and create if necessary
-	CHAIN_TEST=$($IPT -L pam_shield 2>/dev/null)
-	if [ -z "$CHAIN_TEST" ]
-	then
-		"$IPT" -N pam_shield
-		"$IPT" -I pam_shield -j DROP
-		if [ "$TASK" = "-D" ]; then
-			return
-		fi
-	fi
+# check to see if pam_shield chain exists and create if necessary
+CHAIN_TEST=$($IPT -L pam_shield 2>/dev/null)
+if [ -z "$CHAIN_TEST" ]
+then
+    "$IPT" -N pam_shield
+    "$IPT" -I pam_shield -j DROP
+    if [ "$TASK" = "-D" ]; then
+        return
+    fi
+fi
 
 #
-#	CUSTOMIZE THIS RULE if you want to
+# CUSTOMIZE THIS RULE if you want to
 #
-#	$TASK is the iptables command: -A/-I or -D
-#	$2 is the IP number
+# $TASK is the iptables command: -A/-I or -D
+# $2 is the IP number
 #
-#	* put in the correct chain name (pam_shield or INPUT)
-#	* put in the correct network interface name (e.g. -i eth0)
-#         Currently blocks on all interfaces
-#	* put in a port number (e.g.--destination-port 22 for ssh only) 
-#         Currently blocks all ports
-#	* add additional rules for additional services as needed
+# * put in the correct chain name (pam_shield or INPUT)
+# * put in the correct network interface name (e.g. -i eth0)
+#   Currently blocks on all interfaces
+# * put in a port number (e.g.--destination-port 22 for ssh only) 
+#   Currently blocks all ports
+# * add additional rules for additional services as needed
 #
 
-	if ! "$IPT" "$TASK" INPUT -p tcp -s "$2" -j pam_shield ; then
-		if [ "$TASK" = "-C" ]; then
-			run_iptables "-I" "$2"
-		fi
-	fi
+if ! "$IPT" "$TASK" INPUT -p tcp -s "$2" -j pam_shield ; then
+    if [ "$TASK" = "-C" ]; then
+        run_iptables "-I" "$2"
+    fi
+fi
 
-#	mail -s "[security] pam_shield blocked $2" root <<EOF
-#Another monkey kept off our backs ...
-#EOF
+# mail -s "[security] pam_shield blocked $2" root <<EOF
+# Another monkey kept off our backs ...
+# EOF
 }
 
 
@@ -82,11 +82,11 @@ run_iptables() {
 
 
 usage() {
-	echo "shield-trigger-iptables"
-	echo "usage: ${0##*/} [add|del|sync] <IP number>"
-	echo
-	echo "shield-trigger-iptables is normally called by the pam_shield PAM module"
-	exit 1
+    echo "shield-trigger-iptables"
+    echo "usage: ${0##*/} [add|del|sync] <IP number>"
+    echo
+    echo "shield-trigger-iptables is normally called by the pam_shield PAM module"
+    exit 1
 }
 
 
@@ -94,32 +94,32 @@ PATH=/sbin:/usr/sbin:/bin:/usr/bin
 
 if [ -z "$2" ]
 then
-	usage
+    usage
 fi
 
 case "$1" in
-	add)
-		logger -i -t shield-trigger -p authpriv.info "blocking $2"
+    add)
+        logger -i -t shield-trigger -p authpriv.info "blocking $2"
 
-		CMD="-A"
-		IP=$2
-		;;
+        CMD="-A"
+        IP=$2
+        ;;
 
-	del)
-		logger -i -t shield-trigger -p authpriv.info "unblocking $2"
+    del)
+        logger -i -t shield-trigger -p authpriv.info "unblocking $2"
 
-		CMD="-D"
-		IP=$2
-		;;
+        CMD="-D"
+        IP=$2
+        ;;
 
-	sync)
-		logger -i -t shield-trigger -p authpriv.info "sync $2"
-		CMD="-C"
-		IP=$2
-		;;
-	*)
-		usage
-		;;
+    sync)
+        logger -i -t shield-trigger -p authpriv.info "sync $2"
+        CMD="-C"
+        IP=$2
+        ;;
+    *)
+        usage
+        ;;
 esac
 
 run_iptables "$CMD" "$IP"
