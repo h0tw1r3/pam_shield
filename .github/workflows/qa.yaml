@@ -1,3 +1,4 @@
+---
 name: "QA"
 
 on:
@@ -9,11 +10,30 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
+env:
+  DEBIAN_FRONTEND: noninteractive
+  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
 jobs:
-  Shellcheck:
+  lint:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - uses: reviewdog/action-shellcheck@v1
         with:
           check_all_files_with_shebangs: "true"
+      - name: configure
+        run: |
+          sudo apt-get -qq install -y libgdbm-dev libpam-dev
+          autoreconf -fi
+          ./configure
+      - uses: h0tw1r3/cpp-linter-action@python-cache
+        id: cpplinter
+        with:
+          version: '14'
+          style: 'file'
+          tidy-checks: ''
+          tidy-review: true
+          format-review: true
+          thread-comments: false
+          cache: true
