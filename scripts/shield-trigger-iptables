@@ -25,7 +25,7 @@ run_iptables() {
 #
 #	louzy detection of IPv4 or IPv6 address
 #
-	IPT=`echo "$2" | sed 's/[0-9\.]//g'`
+	IPT=$(echo "$2" | sed 's/[0-9\.]//g')
 	if [ -z "$IPT" ]
 	then
 		IPT=iptables
@@ -34,7 +34,7 @@ run_iptables() {
 	fi
 
 #	switch -A for iptables to -I
-	if [ "$1" == "-A" ]
+	if [ "$1" = "-A" ]
 	then
 		TASK="-I"
 	else
@@ -42,12 +42,12 @@ run_iptables() {
 	fi
 
 #	check to see if pam_shield chain exists and create if necessary
-	CHAIN_TEST=`$IPT -L pam_shield 2>/dev/null`
+	CHAIN_TEST=$($IPT -L pam_shield 2>/dev/null)
 	if [ -z "$CHAIN_TEST" ]
 	then
 		"$IPT" -N pam_shield
 		"$IPT" -I pam_shield -j DROP
-		if [ "$TASK" == "-D" ]; then
+		if [ "$TASK" = "-D" ]; then
 			return
 		fi
 	fi
@@ -66,10 +66,8 @@ run_iptables() {
 #	* add additional rules for additional services as needed
 #
 
-	"$IPT" "$TASK" INPUT -p tcp -s "$2" -j pam_shield
-
-	if [ $? -ne 0 ]; then
-		if [ "$TASK" == "-C" ]; then
+	if ! "$IPT" "$TASK" INPUT -p tcp -s "$2" -j pam_shield ; then
+		if [ "$TASK" = "-C" ]; then
 			run_iptables "-I" "$2"
 		fi
 	fi
