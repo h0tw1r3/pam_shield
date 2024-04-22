@@ -30,7 +30,7 @@ jobs:
           sudo apt-get -qq install -y libgdbm-dev libpam-dev
           autoreconf -fi
           ./configure
-      - uses: h0tw1r3/cpp-linter-action@python-cache
+      - uses: h0tw1r3/cpp-linter-action@python-cache2
         id: cpplinter
         with:
           version: '14'
