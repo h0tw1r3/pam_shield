@@ -27,12 +27,9 @@ null_route() {
     # louzy detection of IPv4 or IPv6 address
     #
     TASK="$1"
-    INET=$(echo "$2" | sed 's/[0-9\.]//g')
-    if [ -z "$INET" ]
-    then
-        INET=""
-        GW="127.0.0.1"
-    else
+    INET=""
+    GW="127.0.0.1"
+    if [ "${2#*:}" != "$2" ] ; then
         INET="-f inet6"
         GW="::1"
     fi

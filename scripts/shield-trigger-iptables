@@ -22,16 +22,8 @@
 #
 
 run_iptables() {
-    #
-    # louzy detection of IPv4 or IPv6 address
-    #
-    IPT=$(echo "$2" | sed 's/[0-9\.]//g')
-    if [ -z "$IPT" ]
-    then
-        IPT=iptables
-    else
-        IPT=ip6tables
-    fi
+    IPT="iptables"
+    [ "${2#*:}" != "$2" ] && IPT="ip6tables"
 
 # switch -A for iptables to -I
 if [ "$1" = "-A" ]
