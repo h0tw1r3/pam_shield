@@ -1,6 +1,7 @@
-#! /bin/sh
+#!/bin/sh
+# shellcheck disable=SC2086
 #
-#	shield-trigger
+#   shield-trigger
 #
 #   pam_shield 0.9.7
 #   Copyright (C) 2007-2012  Walter de Jong <walter@heiho.net>
@@ -22,41 +23,40 @@
 #
 
 null_route() {
-#
-#	louzy detection of IPv4 or IPv6 address
-#
-	TASK="$1"
-	INET=`echo "$2" | sed 's/[0-9\.]//g'`
-	if [ -z "$INET" ]
-	then
-		INET=""
-		GW="127.0.0.1"
-	else
-		INET="-f inet6"
-		GW="::1"
-	fi
+    #
+    # louzy detection of IPv4 or IPv6 address
+    #
+    TASK="$1"
+    INET=$(echo "$2" | sed 's/[0-9\.]//g')
+    if [ -z "$INET" ]
+    then
+        INET=""
+        GW="127.0.0.1"
+    else
+        INET="-f inet6"
+        GW="::1"
+    fi
 
-	if [ -x /sbin/ip ]
-	then
-		if [ "$TASK" == "show" ]; then
-			/sbin/ip $INET route $TASK $2 | read -t 1 -N 1
-			if [ $? -eq 0 ]; then
-				return
-			fi
-			TASK="add"
-		fi
-		/sbin/ip $INET route $TASK blackhole $2 2>/dev/null
-	else
-		if [ ! -z "$INET" ]
-		then
-			INET="-A inet6"
-		fi
-		/sbin/route $INET $TASK -host $2 gw $GW dev lo
-	fi
+    if [ -x /sbin/ip ]
+    then
+        if [ "$TASK" = "show" ]; then
+            if /sbin/ip $INET route "$TASK" "$2" | read -r _x ; then
+                return
+            fi
+            TASK="add"
+        fi
+        /sbin/ip $INET route "$TASK" blackhole "$2" 2>/dev/null
+    else
+        if [ -n "$INET" ]
+        then
+            INET="-A inet6"
+        fi
+        /sbin/route $INET "$TASK" -host "$2" gw "$GW" dev lo
+    fi
 
-#	mail -s "[security] pam_shield blocked $2" root <<EOF
-#Another monkey kept off our backs ...
-#EOF
+# mail -s "[security] pam_shield blocked $2" root <<EOF
+# Another monkey kept off our backs ...
+# EOF
 }
 
 
@@ -64,11 +64,11 @@ null_route() {
 
 
 usage() {
-	echo "shield-trigger"
-	echo "usage: ${0##*/} [add|del|sync] <IP number>"
-	echo
-	echo "shield-trigger is normally called by the pam_shield PAM module"
-	exit 1
+    echo "shield-trigger"
+    echo "usage: ${0##*/} [add|del|sync] <IP number>"
+    echo
+    echo "shield-trigger is normally called by the pam_shield PAM module"
+    exit 1
 }
 
 
@@ -76,37 +76,37 @@ PATH=/sbin:/usr/sbin:/bin:/usr/bin
 
 if [ -z "$2" ]
 then
-	usage
+    usage
 fi
 
 case "$1" in
-	add)
-		logger -i -t shield-trigger -p authpriv.info "blocking $2"
+    add)
+        logger -i -t shield-trigger -p authpriv.info "blocking $2"
 
-		CMD="add"
-		IP=$2
-		;;
+        CMD="add"
+        IP=$2
+        ;;
 
-	del)
-		logger -i -t shield-trigger -p authpriv.info "unblocking $2"
+    del)
+        logger -i -t shield-trigger -p authpriv.info "unblocking $2"
 
-		CMD="del"
-		IP=$2
-		;;
+        CMD="del"
+        IP=$2
+        ;;
 
-	sync)
-		logger -i -t shield-trigger -p authpriv.info "sync $2"
-		CMD="show"
-		IP=$2
-		;;
+    sync)
+        logger -i -t shield-trigger -p authpriv.info "sync $2"
+        CMD="show"
+        IP=$2
+        ;;
 
-	*)
-		usage
-		;;
+    *)
+        usage
+        ;;
 esac
 
 null_route "$CMD" "$IP"
 
-exit 0		# make pam_shield happy
+exit 0 # make pam_shield happy
 
 # EOB
