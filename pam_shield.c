@@ -162,9 +162,13 @@ PAM_EXTERN int pam_sm_authenticate(pam_handle_t *pamh, int flags, int argc, cons
   logmsg(LOG_DEBUG, "user %s", (user == NULL) ? "(unknown)" : user);
 
   /* if not blocking all and the user is known, let go */
-  if (!(options & OPT_BLOCK_ALL) && user != NULL && (pwd = getpwnam(user)) != NULL) {
-    logmsg(LOG_DEBUG, "ignoring known user %s", user);
-    deinit_module();
+  if (!(options & OPT_BLOCK_ALL) && user != NULL) {
+    pwd = getpwnam(user);
+    if (pwd == NULL) {
+      logmsg(LOG_DEBUG, "ignoring known user %s", user);
+      deinit_module();
+      return PAM_IGNORE;
+    }
     return PAM_IGNORE;
   }
 
@@ -280,7 +284,6 @@ PAM_EXTERN int pam_sm_authenticate(pam_handle_t *pamh, int flags, int argc, cons
     }
     /* for every address that this host is known for, check the database */
     for (addr_p = addr_info; addr_p != NULL; addr_p = addr_p->ai_next) {
-      whitelisted = 0;
       switch (addr_p->ai_family) {
       case PF_INET:
         addr_family = PAM_SHIELD_ADDR_IPV4;
