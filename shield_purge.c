@@ -45,8 +45,7 @@ static void usage(char *progname) {
          "usage: %s <options>\n"
          "options:\n"
          "  -h, --help        Display this information\n"
-         "  -c, --conf=file   Specify config file (default: " DEFAULT_CONFFILE
-         ")\n"
+         "  -c, --conf=file   Specify config file (default: " DEFAULT_CONFFILE ")\n"
          "  -d, --debug       Verbose output for debugging purposes\n"
          "  -n, --dry-run     Do not perform any updates\n"
          "  -l, --list        List all database entries\n"
@@ -56,31 +55,27 @@ static void usage(char *progname) {
          "                    (rebuild/verify firewall rules)\n",
          basename(progname));
 
-  printf(
-      "\n"
-      "This program is part of the PAM-shield package.\n"
-      "PAM-shield comes with ABSOLUTELY NO WARRANTY.  This is free software, "
-      "and you\n"
-      "are welcome to redistribute it under certain conditions.  See the GNU\n"
-      "General Public Licence for details.\n"
-      "\n"
-      "Copyright (C) 2007-2011 by Walter de Jong <walter@heiho.net>\n"
-      "Copyright 2010 Jonathan Niehof <jtniehof@gmail.com>\n");
+  printf("\n"
+         "This program is part of the PAM-shield package.\n"
+         "PAM-shield comes with ABSOLUTELY NO WARRANTY.  This is free software, "
+         "and you\n"
+         "are welcome to redistribute it under certain conditions.  See the GNU\n"
+         "General Public Licence for details.\n"
+         "\n"
+         "Copyright (C) 2007-2011 by Walter de Jong <walter@heiho.net>\n"
+         "Copyright 2010 Jonathan Niehof <jtniehof@gmail.com>\n");
   exit(1);
 }
 
 static void get_options(int argc, char **argv) {
   int opt;
   struct option long_options[] = {
-      {"help", 0, NULL, 'h'},   {"debug", 0, NULL, 'd'},
-      {"conf", 1, NULL, 'c'},   {"dry-run", 0, NULL, 'n'},
-      {"list", 0, NULL, 'l'},   {"force", 0, NULL, 'f'},
-      {"remove", 1, NULL, 'r'}, {"sync", 0, NULL, 's'},
-      {NULL, 0, NULL, 0},
+      {"help", 0, NULL, 'h'},    {"debug", 0, NULL, 'd'}, {"conf", 1, NULL, 'c'},
+      {"dry-run", 0, NULL, 'n'}, {"list", 0, NULL, 'l'},  {"force", 0, NULL, 'f'},
+      {"remove", 1, NULL, 'r'},  {"sync", 0, NULL, 's'},  {NULL, 0, NULL, 0},
   };
 
-  while ((opt = getopt_long(argc, argv, "hdc:nlfr:s", long_options, NULL)) !=
-         -1) {
+  while ((opt = getopt_long(argc, argv, "hdc:nlfr:s", long_options, NULL)) != -1) {
     switch (opt) {
     case 'h':
     case '?':
@@ -157,14 +152,12 @@ static void print_record(_pam_shield_db_rec_t *record) {
          "      \"count\": %u,\n"
          "      \"trigger_active\": \"%s\",\n"
          "      \"timestamps\": [\n",
-         ipbuf, record->max_entries, record->count,
-         (record->trigger_active > 0) ? time : "");
+         ipbuf, record->max_entries, record->count, (record->trigger_active > 0) ? time : "");
   for (i = 0; i < record->max_entries; i++)
     if (record->timestamps[i] > 0) {
       time = ctime(&record->timestamps[i]);
       time[strlen(time) - 1] = '\0';
-      printf("        \"%s\"%s\n", time,
-             (record->timestamps[(i + 1)] > 0) ? "," : "");
+      printf("        \"%s\"%s\n", time, (record->timestamps[(i + 1)] > 0) ? "," : "");
     }
 
   printf("      ]\n    }");
@@ -314,10 +307,8 @@ int main(int argc, char **argv) {
 
   this_time = time(NULL);
 
-  if ((dbf = gdbm_open(dbfile, 512, GDBM_WRITER, (mode_t)0600, fatal_func)) ==
-      NULL) {
-    logmsg(LOG_ERR, "failed to open db '%s' : %s", dbfile,
-           gdbm_strerror(gdbm_errno));
+  if ((dbf = gdbm_open(dbfile, 512, GDBM_WRITER, (mode_t)0600, fatal_func)) == NULL) {
+    logmsg(LOG_ERR, "failed to open db '%s' : %s", dbfile, gdbm_strerror(gdbm_errno));
     return -1;
   }
   if (options & OPT_LISTDB)

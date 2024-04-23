@@ -1,24 +1,24 @@
 /*
-    pam_shield_lib.c
+  pam_shield_lib.c
 
-    Copyright (C) 2007-2024
-    Walter de Jong <walter@heiho.net>
-    Jonathan Niehof <jtniehof@gmail.com>
-    Jeffrey Clark <h0tw1r3@gmail.com>
+  Copyright (C) 2007-2024
+  Walter de Jong <walter@heiho.net>
+  Jonathan Niehof <jtniehof@gmail.com>
+  Jeffrey Clark <h0tw1r3@gmail.com>
 
-    This program is free software; you can redistribute it and/or modify
-    it under the terms of the GNU General Public License as published by
-    the Free Software Foundation; either version 2 of the License, or
-    (at your option) any later version.
+  This program is free software; you can redistribute it and/or modify
+  it under the terms of the GNU General Public License as published by
+  the Free Software Foundation; either version 2 of the License, or
+  (at your option) any later version.
 
-    This program is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-    GNU General Public License for more details.
+  This program is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  GNU General Public License for more details.
 
-    You should have received a copy of the GNU General Public License
-    along with this program; if not, write to the Free Software
-    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+  You should have received a copy of the GNU General Public License
+  along with this program; if not, write to the Free Software
+  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 */
 
 #include <arpa/inet.h>
@@ -90,14 +90,11 @@ void add_ip_list(ip_list **root, ip_list *ip) {
   if (options & OPT_DEBUG) {
     char addr[INET6_ADDRSTRLEN], mask[INET6_ADDRSTRLEN];
 
-    if (*root ==
-        allow_ipv4_list) /* (butt ugly check, just to get nice debug output) */
-      logmsg(LOG_DEBUG, "allowing from %s/%s",
-             inet_ntop(AF_INET, &ip->ip.in, addr, sizeof(addr)),
+    if (*root == allow_ipv4_list) /* (butt ugly check, just to get nice debug output) */
+      logmsg(LOG_DEBUG, "allowing from %s/%s", inet_ntop(AF_INET, &ip->ip.in, addr, sizeof(addr)),
              inet_ntop(AF_INET, &ip->mask.in, mask, sizeof(mask)));
     else
-      logmsg(LOG_DEBUG, "allowing from %s/%s",
-             inet_ntop(AF_INET6, &ip->ip.in6, addr, sizeof(addr)),
+      logmsg(LOG_DEBUG, "allowing from %s/%s", inet_ntop(AF_INET6, &ip->ip.in6, addr, sizeof(addr)),
              inet_ntop(AF_INET6, &ip->mask.in6, mask, sizeof(mask)));
   }
   ip->prev = ip->next = NULL;
@@ -113,8 +110,8 @@ void add_ip_list(ip_list **root, ip_list *ip) {
 }
 
 /*
-    try to match an IP number against the allow list
-    returns 1 if it matches
+  try to match an IP number against the allow list
+  returns 1 if it matches
 */
 int match_ipv4_list(unsigned char *saddr) {
   ip_list *ip;
@@ -129,11 +126,9 @@ int match_ipv4_list(unsigned char *saddr) {
       }
     }
     if (match) {
-      char addr1[INET_ADDRSTRLEN], addr2[INET_ADDRSTRLEN],
-          mask[INET_ADDRSTRLEN];
+      char addr1[INET_ADDRSTRLEN], addr2[INET_ADDRSTRLEN], mask[INET_ADDRSTRLEN];
 
-      logmsg(LOG_DEBUG, "whitelist match: %s %s/%s",
-             inet_ntop(AF_INET, saddr, addr1, sizeof(addr1)),
+      logmsg(LOG_DEBUG, "whitelist match: %s %s/%s", inet_ntop(AF_INET, saddr, addr1, sizeof(addr1)),
              inet_ntop(AF_INET, &ip->ip.in, addr2, sizeof(addr2)),
              inet_ntop(AF_INET, &ip->mask.in, mask, sizeof(mask)));
       return 1;
@@ -155,11 +150,9 @@ int match_ipv6_list(unsigned char *saddr) {
       }
     }
     if (match) {
-      char addr1[INET6_ADDRSTRLEN], addr2[INET6_ADDRSTRLEN],
-          mask[INET6_ADDRSTRLEN];
+      char addr1[INET6_ADDRSTRLEN], addr2[INET6_ADDRSTRLEN], mask[INET6_ADDRSTRLEN];
 
-      logmsg(LOG_DEBUG, "whitelist match: %s %s/%s",
-             inet_ntop(AF_INET6, saddr, addr1, sizeof(addr1)),
+      logmsg(LOG_DEBUG, "whitelist match: %s %s/%s", inet_ntop(AF_INET6, saddr, addr1, sizeof(addr1)),
              inet_ntop(AF_INET6, &ip->ip.in6, addr2, sizeof(addr2)),
              inet_ntop(AF_INET6, &ip->mask.in6, mask, sizeof(mask)));
       return 1;
@@ -212,8 +205,8 @@ void add_name_list(name_list **root, name_list *n) {
 }
 
 /*
-    see if 'name' matches our whitelist
-    return 1 if it does
+  see if 'name' matches our whitelist
+  return 1 if it does
 */
 int match_name_list(char *name) {
   name_list *n;
@@ -223,10 +216,8 @@ int match_name_list(char *name) {
 
   for (n = allow_names; n != NULL; n = n->next) {
     if (n->name[0] == '.') {
-      if ((strlen(name) > strlen(n->name)) &&
-          !strcasecmp(n->name, name + strlen(name) - strlen(n->name))) {
-        logmsg(LOG_DEBUG, "whitelist match: host %s in domain %s", name,
-               n->name);
+      if ((strlen(name) > strlen(n->name)) && !strcasecmp(n->name, name + strlen(name) - strlen(n->name))) {
+        logmsg(LOG_DEBUG, "whitelist match: host %s in domain %s", name, n->name);
         return 1;
       }
     } else {
@@ -294,23 +285,22 @@ void strip(char *str) {
     memmove(str, p, strlen(p) + 1);
   }
   i = strlen(str) - 1;
-  while (i >= 0 &&
-         (str[i] == ' ' || str[i] == '\t' || str[i] == '\r' || str[i] == '\n'))
+  while (i >= 0 && (str[i] == ' ' || str[i] == '\t' || str[i] == '\r' || str[i] == '\n'))
     str[i--] = 0;
 }
 
 /*
-    multipliers:
-        1s	second
-        1m	minute
-        1h	hour
-        1d	day
-        1w	week
-        1M	month
-        1y	year
+  multipliers:
+    1s	second
+    1m	minute
+    1h	hour
+    1d	day
+    1w	week
+    1M	month
+    1y	year
 
-    default is 1
-    returns 0 on error
+  default is 1
+  returns 0 on error
 */
 long get_multiplier(char *str) {
   if (str == NULL || !*str)
@@ -346,10 +336,10 @@ long get_multiplier(char *str) {
 }
 
 /*
-    generate bitmask from '/24' notation
+  generate bitmask from '/24' notation
 
-    mask is struct in_addr.saddr, size is the size of the array
-    (4 for IPv4, 16 for IPv6)
+  mask is struct in_addr.saddr, size is the size of the array
+  (4 for IPv4, 16 for IPv6)
 */
 void ip_bitmask(int bits, unsigned char *mask, int size) {
   int i, num, rest;
@@ -379,8 +369,8 @@ void ip_bitmask(int bits, unsigned char *mask, int size) {
 }
 
 /*
-    allow network/netmask, for both IPv4 and IPv6
-    netmask can be in canonical or decimal notation
+  allow network/netmask, for both IPv4 and IPv6
+  netmask can be in canonical or decimal notation
 */
 int allow_ip(char *ipnum, int line_no) {
   char *netmask;
@@ -396,14 +386,12 @@ int allow_ip(char *ipnum, int line_no) {
     *netmask = 0;
     netmask++;
     if (!*netmask) {
-      logmsg(LOG_ALERT, "%s:%d: missing netmask, assuming it is a host",
-             conffile, line_no);
+      logmsg(LOG_ALERT, "%s:%d: missing netmask, assuming it is a host", conffile, line_no);
       netmask = NULL;
     }
   }
   if ((ip = new_ip_list()) == NULL) {
-    logmsg(LOG_ALERT, "%s:%d: out of memory adding 'allow' line", conffile,
-           line_no);
+    logmsg(LOG_ALERT, "%s:%d: out of memory adding 'allow' line", conffile, line_no);
     return -1;
   }
   /* try network address as IPv4 */
@@ -421,8 +409,7 @@ int allow_ip(char *ipnum, int line_no) {
         destroy_ip_list(ip);
         return -1;
       }
-      ip_bitmask(bits, (unsigned char *)&ip->mask.in.s_addr,
-                 sizeof(ip->mask.in.s_addr));
+      ip_bitmask(bits, (unsigned char *)&ip->mask.in.s_addr, sizeof(ip->mask.in.s_addr));
 
       add_ip_list(&allow_ipv4_list, ip);
       return 0;
@@ -451,8 +438,7 @@ int allow_ip(char *ipnum, int line_no) {
         destroy_ip_list(ip);
         return -1;
       }
-      ip_bitmask(bits, (unsigned char *)ip->mask.in6.s6_addr,
-                 sizeof(ip->mask.in6.s6_addr));
+      ip_bitmask(bits, (unsigned char *)ip->mask.in6.s6_addr, sizeof(ip->mask.in6.s6_addr));
 
       add_ip_list(&allow_ipv6_list, ip);
       return 0;
@@ -467,20 +453,18 @@ int allow_ip(char *ipnum, int line_no) {
     return -1;
   }
   /*
-      when we get here it's either a syntax error or a hostname or a network
-      name with names, you can not specify a netmask
+    when we get here it's either a syntax error or a hostname or a network
+    name with names, you can not specify a netmask
   */
   destroy_ip_list(ip);
   ip = NULL;
 
   if (netmask != NULL) {
-    logmsg(LOG_ALERT, "%s:%d: syntax error in internet address", conffile,
-           line_no);
+    logmsg(LOG_ALERT, "%s:%d: syntax error in internet address", conffile, line_no);
     return -1;
   }
   if ((name = new_name_list(ipnum)) == NULL) {
-    logmsg(LOG_ALERT, "%s:%d: out of memory while adding 'allow' line",
-           conffile, line_no);
+    logmsg(LOG_ALERT, "%s:%d: out of memory while adding 'allow' line", conffile, line_no);
     return -1;
   }
   add_name_list(&allow_names, name);
@@ -553,8 +537,7 @@ int read_config(void) {
                p);
         continue;
       }
-      logmsg(LOG_ALERT, "%s:%d: unknown argument '%s' to 'debug'", conffile,
-             line_no, p);
+      logmsg(LOG_ALERT, "%s:%d: unknown argument '%s' to 'debug'", conffile, line_no, p);
       continue;
     }
     if (!strcmp(buf, "block")) {
@@ -566,41 +549,33 @@ int read_config(void) {
         options &= ~OPT_BLOCK_ALL;
         continue;
       }
-      logmsg(LOG_ALERT, "%s:%d: unknown argument '%s' to 'block'", conffile,
-             line_no, p);
+      logmsg(LOG_ALERT, "%s:%d: unknown argument '%s' to 'block'", conffile, line_no, p);
       err--;
       continue;
     }
     if (!strcmp(buf, "allow_missing_dns")) {
-      if (!strcasecmp(p, "yes") || !strcasecmp(p, "allow") ||
-          !strcasecmp(p, "on")) {
+      if (!strcasecmp(p, "yes") || !strcasecmp(p, "allow") || !strcasecmp(p, "on")) {
         options |= OPT_MISSING_DNS;
         continue;
       }
-      if (!strcasecmp(p, "no") || !strcasecmp(p, "deny") ||
-          !strcasecmp(p, "off")) {
+      if (!strcasecmp(p, "no") || !strcasecmp(p, "deny") || !strcasecmp(p, "off")) {
         options &= ~OPT_MISSING_DNS;
         continue;
       }
-      logmsg(LOG_ALERT, "%s:%d: unknown argument '%s' to 'allow_missing_dns'",
-             conffile, line_no, p);
+      logmsg(LOG_ALERT, "%s:%d: unknown argument '%s' to 'allow_missing_dns'", conffile, line_no, p);
       err--;
       continue;
     }
     if (!strcmp(buf, "allow_missing_reverse")) {
-      if (!strcasecmp(p, "yes") || !strcasecmp(p, "allow") ||
-          !strcasecmp(p, "on")) {
+      if (!strcasecmp(p, "yes") || !strcasecmp(p, "allow") || !strcasecmp(p, "on")) {
         options |= OPT_MISSING_REVERSE;
         continue;
       }
-      if (!strcasecmp(p, "no") || !strcasecmp(p, "deny") ||
-          !strcasecmp(p, "off")) {
+      if (!strcasecmp(p, "no") || !strcasecmp(p, "deny") || !strcasecmp(p, "off")) {
         options &= ~OPT_MISSING_REVERSE;
         continue;
       }
-      logmsg(LOG_ALERT,
-             "%s:%d: unknown argument '%s' to 'allow_missing_reverse'",
-             conffile, line_no, p);
+      logmsg(LOG_ALERT, "%s:%d: unknown argument '%s' to 'allow_missing_reverse'", conffile, line_no, p);
       err--;
       continue;
     }
@@ -624,8 +599,7 @@ int read_config(void) {
         err--;
       }
       if (stat(trigger_cmd, &statbuf) == -1) {
-        logmsg(LOG_ALERT, "%s:%d: command '%s' not found", conffile, line_no,
-               trigger_cmd);
+        logmsg(LOG_ALERT, "%s:%d: command '%s' not found", conffile, line_no, trigger_cmd);
         err--;
       }
       continue;
@@ -670,8 +644,8 @@ int read_config(void) {
 }
 
 /*
-    print the IP number of a db_record
-    return NULL on error, or buf on success
+  print the IP number of a db_record
+  return NULL on error, or buf on success
 */
 const char *print_ip(_pam_shield_db_rec_t *record, char *buf, int buflen) {
   if (buf == NULL || buflen <= 1)
@@ -728,8 +702,7 @@ int run_trigger(char *cmd, _pam_shield_db_rec_t *record) {
 
     execvp(argv[0], argv);
 
-    logmsg(LOG_CRIT, "failed to execute command '%s %s %s'", trigger_cmd, cmd,
-           ipbuf);
+    logmsg(LOG_CRIT, "failed to execute command '%s %s %s'", trigger_cmd, cmd, ipbuf);
     exit(-1);
   } else {
     pid_t err;
@@ -753,10 +726,8 @@ int expire_record(_pam_shield_db_rec_t *record) {
 
   updated = 0;
   /* expire entries that are no longer in this interval (sliding window) */
-  while (record->count > 0 &&
-         difftime(this_time, record->timestamps[0]) >= (double)interval) {
-    memmove(record->timestamps, &record->timestamps[1],
-            (record->max_entries - 1) * sizeof(time_t));
+  while (record->count > 0 && difftime(this_time, record->timestamps[0]) >= (double)interval) {
+    memmove(record->timestamps, &record->timestamps[1], (record->max_entries - 1) * sizeof(time_t));
     record->count--;
     updated++;
   }
@@ -764,8 +735,7 @@ int expire_record(_pam_shield_db_rec_t *record) {
     if (difftime(this_time, record->trigger_active) >= (double)retention) {
       /* expire old trigger, but only do this if the sliding window is clean */
       if (!record->count) {
-        logmsg(LOG_DEBUG, "expiring old trigger for %s",
-               print_ip(record, ipbuf, sizeof(ipbuf)));
+        logmsg(LOG_DEBUG, "expiring old trigger for %s", print_ip(record, ipbuf, sizeof(ipbuf)));
         record->trigger_active = (time_t)0L;
         run_trigger("del", record);
         updated++;
@@ -781,14 +751,11 @@ int expire_record(_pam_shield_db_rec_t *record) {
 
 /* gdbm has encountered a fatal error */
 void fatal_func(const char *str) {
-  logmsg(LOG_ERR, "gdbm encountered a fatal error : %s; resetting the database",
-         str);
+  logmsg(LOG_ERR, "gdbm encountered a fatal error : %s; resetting the database", str);
 
   gdbm_close(dbf);
-  if ((dbf = gdbm_open(dbfile, 512, GDBM_NEWDB, (mode_t)0600, fatal_func)) ==
-      NULL)
-    logmsg(LOG_ERR, "failed to create new gdbm file '%s' : %s", dbfile,
-           gdbm_strerror(gdbm_errno));
+  if ((dbf = gdbm_open(dbfile, 512, GDBM_NEWDB, (mode_t)0600, fatal_func)) == NULL)
+    logmsg(LOG_ERR, "failed to create new gdbm file '%s' : %s", dbfile, gdbm_strerror(gdbm_errno));
 }
 
 #pragma GCC visibility pop
