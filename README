@@ -1,5 +1,9 @@
-pam_shield by Walter de Jong <walter@heiho.net> and Jonathan Niehof
-<jtniehof@gmail.com>, copyright 2007-2012.
+pam_shield
+
+Copyright (C) 2007-2024
+Walter de Jong <walter@heiho.net>
+Jonathan Niehof <jtniehof@gmail.com>
+Jeffrey Clark <h0tw1r3@gmail.com>
 
 pam_shield COMES WITH NO WARRANTY. pam_shield IS FREE SOFTWARE.
 pam_shield is distributed under terms described in the GNU General Public

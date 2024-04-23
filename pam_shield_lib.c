@@ -1,9 +1,10 @@
 /*
-        pam_shield_lib.c
+    pam_shield_lib.c
 
-    pam_shield 0.9.7
-    Copyright (C) 2007-2012  Walter de Jong <walter@heiho.net>
-    and Jonathan Niehof <jtniehof@gmail.com>
+    Copyright (C) 2007-2024
+    Walter de Jong <walter@heiho.net>
+    Jonathan Niehof <jtniehof@gmail.com>
+    Jeffrey Clark <h0tw1r3@gmail.com>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
