@@ -23,9 +23,6 @@
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
 null_route() {
-    #
-    # louzy detection of IPv4 or IPv6 address
-    #
     TASK="$1"
     INET=""
     GW="127.0.0.1"
@@ -34,9 +31,8 @@ null_route() {
         GW="::1"
     fi
 
-    if [ -x /sbin/ip ]
-    then
-        if [ "$TASK" = "show" ]; then
+    if [ -x /sbin/ip ] ; then
+        if [ "$TASK" = "show" ] ; then
             if /sbin/ip $INET route "$TASK" "$2" | read -r _x ; then
                 return
             fi
@@ -44,21 +40,16 @@ null_route() {
         fi
         /sbin/ip $INET route "$TASK" blackhole "$2" 2>/dev/null
     else
-        if [ -n "$INET" ]
-        then
-            INET="-A inet6"
-        fi
+        [ -n "$INET" ] && INET="-A inet6"
         /sbin/route $INET "$TASK" -host "$2" gw "$GW" dev lo
     fi
-
-# mail -s "[security] pam_shield blocked $2" root <<EOF
-# Another monkey kept off our backs ...
-# EOF
 }
-
 
 ### usually no editing is needed beyond this point ###
 
+log() {
+    logger -i -t shield-trigger -p authpriv.info "$*"
+}
 
 usage() {
     echo "shield-trigger"
@@ -68,33 +59,24 @@ usage() {
     exit 1
 }
 
-
 PATH=/sbin:/usr/sbin:/bin:/usr/bin
 
-if [ -z "$2" ]
-then
-    usage
-fi
+[ -z "$2" ] && usage
 
 case "$1" in
     add)
-        logger -i -t shield-trigger -p authpriv.info "blocking $2"
-
+        log "blocking $2"
         CMD="add"
-        IP=$2
         ;;
 
     del)
-        logger -i -t shield-trigger -p authpriv.info "unblocking $2"
-
+        log "unblocking $2"
         CMD="del"
-        IP=$2
         ;;
 
     sync)
-        logger -i -t shield-trigger -p authpriv.info "sync $2"
+        log "sync $2"
         CMD="show"
-        IP=$2
         ;;
 
     *)
@@ -102,8 +84,6 @@ case "$1" in
         ;;
 esac
 
-null_route "$CMD" "$IP"
+null_route "$CMD" "$2"
 
 exit 0 # make pam_shield happy
-
-# EOB
