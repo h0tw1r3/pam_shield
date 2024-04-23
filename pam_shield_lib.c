@@ -709,7 +709,7 @@ int run_trigger(char *cmd, _pam_shield_db_rec_t *record) {
     int status;
 
     while ((err = waitpid(pid, &status, 0)) > 0)
-      ;
+      logmsg(LOG_DEBUG, "child %d exited with status %d", err, WEXITSTATUS(status));
 
     if (WEXITSTATUS(status) != 0)
       return -1;
