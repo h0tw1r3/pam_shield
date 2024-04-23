@@ -172,7 +172,7 @@ name_list *new_name_list(char *name) {
     return NULL;
 
   memset(n, 0, sizeof(name_list));
-  strcpy(n->name, name);
+  snprintf(n->name, sizeof(n->name), "%s", name);
   return n;
 }
 
