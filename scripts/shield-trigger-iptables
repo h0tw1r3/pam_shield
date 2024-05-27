@@ -1,180 +1,145 @@
-#! /bin/sh
+#!/bin/sh
 #
-#	shield-trigger-iptables	WJ107
+# shield-trigger-iptables
 #
-#   pam_shield 0.9.6  WJ107
-#   Copyright (C) 2007-2012  Walter de Jong <walter@heiho.net>
-#   and Carl Thompson
+# Copyright (C) 2007-2024
+# Walter de Jong <walter@heiho.net>
+# Jonathan Niehof <jtniehof@gmail.com>
+# Jeffrey Clark <h0tw1r3@gmail.com>
 #
-#   This program is free software; you can redistribute it and/or modify
-#   it under the terms of the GNU General Public License as published by
-#   the Free Software Foundation; either version 2 of the License, or
-#   (at your option) any later version.
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 2 of the License, or
+# (at your option) any later version.
 #
-#   This program is distributed in the hope that it will be useful,
-#   but WITHOUT ANY WARRANTY; without even the implied warranty of
-#   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-#   GNU General Public License for more details.
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
 #
-#   You should have received a copy of the GNU General Public License
-#   along with this program; if not, write to the Free Software
-#   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
-#
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
 run_iptables() {
-#
-#	louzy detection of IPv4 or IPv6 address
-#	IPT is the iptable command to use depending on ip or ipv6 address
-#	IPSF is the ip family name to use in ipset commands
-#
-	IPT=`echo "$2" | sed 's/[0-9\.]//g'`
-	if [ -z "$IPT" ]
-	then
-		IPT=iptables
-		IPSF=inet
-	else
-		IPT=ip6tables
-		IPSF=inet6
-	fi
+
+    # IPT is the iptable command to use depending on ip or ipv6 address
+	# IPSF is the ip family name to use in ipset commands
+
+    IPT="iptables"
+	IPSF="inet"
+    if [ "${2#*:}" != "$2" ]; then IPT="ip6tables"; IPSF="inet6"; fi
 
 	# Base name of blacklist (will be used in the (ip)set name)
 	SETN='pamshield_blacklist'
 
-### Assign task
-#	switch -A for iptables to -I (ipset not used)
-#	Or directly use add/del verbs if ipset is used
-#	
-	if [ "$1" = "-A" ]
-	then
-	    TASK="-I"
-	elif [ "$1" = "-D" ]
-	then
-		TASK="-D"
-	elif [ "$1" = "add" ] || [ "$1" = "del" ]
-	then
-	    TASK="$1"
-	fi
+    TASK=$1
 
-### Not Ipset
-#	check to see if pam_shield chain exists and create if necessary
-	if [ "$TASK" = "-I" ]
-	then
-		CHAIN_TEST=`$IPT -L pam_shield 2>/dev/null`
-		if [ -z "$CHAIN_TEST" ]
-		    then
-			    "$IPT" -N pam_shield
-			    "$IPT" -I pam_shield -j DROP
+    # switch -A for iptables to -I (ipset not used)
+	# Or directly use add/del verbs if ipset is used
+
+    if [ "$TASK" = "-A" ]; then TASK="-I"; fi
+
+
+    # Init : in case we add an ip, check to see if pam_shield chain exists and create if necessary
+	# Common for "plain" iptables and ipset flavors
+	if echo $TASK | egrep -q "(add|-[CIA]|test)"; then
+		if [ -z "$($IPT -L pam_shield 2>/dev/null)" ]; then
+			"$IPT" -N pam_shield
+			"$IPT" -I pam_shield -j DROP
 		fi
 	fi
 
-### Ipset
-    if [ "$TASK" = "add" ]
-    then
+	### Init : ipset flavor
+    if echo $TASK | egrep -q "(add|test)"; then
 
-        # Test if chain, ipset (set and rule) exist
+        # Test if ipset (set and rule) exist
 		# If not create them as needed
-		
-        CHAIN_TEST=`$IPT -L pam_shield 2>/dev/null`
-        IPSET_TEST=`ipset list -name "${SETN}_$IPSF" 2>/dev/null`
 
         "$IPT" -C INPUT -p tcp -m set --match-set "${SETN}_$IPSF" src -j pam_shield 2>/dev/null
         IPSR=$?
 
-        if [ -z "$CHAIN_TEST" ]
-            then
-                "$IPT" -N pam_shield
-                "$IPT" -I pam_shield -j DROP
+        if [ -z "$(ipset list -name "${SETN}_$IPSF" 2>/dev/null)" ]; then
+			ipset create "${SETN}_$IPSF" hash:ip family "$IPSF"
         fi
 
-        if [ -z "$IPSET_TEST" ]
-            then
-                ipset create "${SETN}_$IPSF" hash:ip family "$IPSF" 
+        if [ "$IPSR" -gt 0 ]; then
+            "$IPT" -I INPUT -p tcp -m set --match-set "${SETN}_$IPSF" src -j pam_shield
         fi
-
-        if [ "$IPSR" -gt 0 ]
-            then
-                "$IPT" -I INPUT -p tcp -m set --match-set "${SETN}_$IPSF" src -j pam_shield
-        fi
-
     fi
 
 
-#
-#	CUSTOMIZE THIS RULE if you want to
-#
-#	Without ipset, $TASK is the iptables command: -A/-I or -D
-#	With ipset, $TASK is the action to do with ipset: add or del
-#		${SETN}_$IPSF (so concat basename + family) builds the set name, ie: pamshield_blacklist_inet
-#
-#	$2 is the IP number
-#
-#	* put in the correct chain name (pam_shield or INPUT)
-#	* put in the correct network interface name (e.g. -i eth0)
-#         Currently blocks on all interfaces
-#	* put in a port number (e.g.--destination-port 22 for ssh only) 
-#         Currently blocks all ports
-#	* add additional rules for additional services as needed
-#
+	# Sync action
+	#
 
-    if [ "$TASK" = "-I" ] || [ "$TASK" = "-D" ]
-        then
-	        "$IPT" "$TASK" INPUT -p tcp -s "$2" -j pam_shield
-	elif [ "$TASK" = "add" ] || [ "$TASK" = "del" ]
-	    then
-	        ipset "$TASK" "${SETN}_$IPSF" "$2"
-    fi
+	if [ "$TASK" = "-C" ]; then
+		! "$IPT" "$TASK" INPUT -p tcp -s "$2" -j pam_shield 2>/dev/null && run_iptables "-I" "$2"
+		return
+	elif [ "$TASK" = "test" ]; then
+		! ipset $TASK "${SETN}_$IPSF" $2 2>/dev/null && run_iptables "add" "$2"
+		return
+	fi
+	
+	
+    # CUSTOMIZE THIS RULE if you want toIn
+    #
+    # $TASK is the iptables command: -A/-I or -D
+    # $2 is the IP number
+    #
+    # * put in the correct chain name (pam_shield or INPUT)
+    # * put in the correct network interface name (e.g. -i eth0)
+    #   Currently blocks on all interfaces
+    # * put in a port number (e.g.--destination-port 22 for ssh only) 
+    #   Currently blocks all ports
+    # * add additional rules for additional services as needed
 
-#	mail -s "[security] pam_shield blocked $2" root <<EOF
-#Another monkey kept off our backs ...
-#EOF
+    if echo $TASK | egrep -q "(-[IAD])"; then
+		"$IPT" "$TASK" INPUT -p tcp -s "$2" -j pam_shield
+	elif echo $TASK | egrep -q "(add|del)"; then
+		ipset "$TASK" "${SETN}_$IPSF" "$2"
+	fi
 }
-
 
 ### usually no editing is needed beyond this point ###
 
-
-usage() {
-	echo "shield-trigger-iptables WJ107"
-	echo "usage: ${0##*/} [add|del] <IP number>"
-	echo
-	echo "shield-trigger-iptables is normally called by the pam_shield PAM module"
-	exit 1
+log() {
+    logger -i -t shield-trigger -p authpriv.info "$*"
 }
 
+usage() {
+    echo "shield-trigger-iptables"
+    echo "usage: ${0##*/} [add|del|sync] <IP number>"
+    echo
+    echo "shield-trigger-iptables is normally called by the pam_shield PAM module"
+    exit 1
+}
 
 PATH=/sbin:/usr/sbin:/bin:/usr/bin
 
-if [ -z "$2" ]
-then
-	usage
-fi
+if [ -z "$2" ]; then usage; fi
 
 # Check if ipset is installed
-IPSI=`which ipset 2>/dev/null`
+IPSI=$(which ipset 2>/dev/null)
 
-# Assign the right value to CMD depending if ipset is installed or not
+
 case "$1" in
-	add)
-		logger -i -t shield-trigger -p authpriv.info "blocking $2"
-
+    add)
+        log "blocking $2"
         if [ -n "$IPSI" ]; then CMD="add"; else CMD="-A"; fi
+        ;;
 
-		IP=$2
-		;;
-
-	del)
-		logger -i -t shield-trigger -p authpriv.info "unblocking $2"
-
+    del)
+        log "unblocking $2"
         if [ -n "$IPSI" ]; then CMD="del"; else CMD="-D"; fi
+        ;;
 
-		IP=$2
-		;;
-
-	*)
-		usage
-		;;
+    sync)
+        log "sync $2"
+        if [ -n "$IPSI" ]; then CMD="test"; else CMD="-C"; fi
+        ;;
+    *)
+        usage
+        ;;
 esac
 
-run_iptables "$CMD" "$IP"
-
-# EOB
+run_iptables "$CMD" "$2"
