@@ -76,7 +76,7 @@ run_iptables() {
 		! "$IPT" "$TASK" INPUT -p tcp -s "$2" -j pam_shield 2>/dev/null && run_iptables "-I" "$2"
 		return
 	elif [ "$TASK" = "test" ]; then
-		! ipset $TASK "${SETN}_$IPSF" $2 2>/dev/null && run_iptables "add" "$2"
+		! ipset "$TASK" "${SETN}_$IPSF" "$2" 2>/dev/null && run_iptables "add" "$2"
 		return
 	fi
 	
