@@ -43,7 +43,7 @@ run_iptables() {
 
     # Init : in case we add an ip, check to see if pam_shield chain exists and create if necessary
 	# Common for "plain" iptables and ipset flavors
-	if echo $TASK | egrep -q "(add|-[CIA]|test)"; then
+	if echo "$TASK" | grep -Eq "(add|-[CIA]|test)"; then
 		if [ -z "$($IPT -L pam_shield 2>/dev/null)" ]; then
 			"$IPT" -N pam_shield
 			"$IPT" -I pam_shield -j DROP
@@ -51,7 +51,7 @@ run_iptables() {
 	fi
 
 	### Init : ipset flavor
-    if echo $TASK | egrep -q "(add|test)"; then
+    if echo "$TASK" | grep -Eq "(add|test)"; then
 
         # Test if ipset (set and rule) exist
 		# If not create them as needed
@@ -93,9 +93,9 @@ run_iptables() {
     #   Currently blocks all ports
     # * add additional rules for additional services as needed
 
-    if echo $TASK | egrep -q "(-[IAD])"; then
+    if echo "$TASK" | grep -Eq "(-[IAD])"; then
 		"$IPT" "$TASK" INPUT -p tcp -s "$2" -j pam_shield
-	elif echo $TASK | egrep -q "(add|del)"; then
+	elif echo "$TASK" | grep -Eq "(add|del)"; then
 		ipset "$TASK" "${SETN}_$IPSF" "$2"
 	fi
 }
