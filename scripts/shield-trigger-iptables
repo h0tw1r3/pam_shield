@@ -22,21 +22,66 @@
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
 run_iptables() {
+
+    # IPT is the iptable command to use depending on ip or ipv6 address
+	# IPSF is the ip family name to use in ipset commands
+
     IPT="iptables"
-    [ "${2#*:}" != "$2" ] && IPT="ip6tables"
+	IPSF="inet"
+    if [ "${2#*:}" != "$2" ]; then IPT="ip6tables"; IPSF="inet6"; fi
 
-    # switch -A for iptables to -I
+	# Base name of blacklist (will be used in the (ip)set name)
+	SETN='pamshield_blacklist'
+
     TASK=$1
-    [ "$1" = "-A" ] && TASK="-I"
 
-    # check to see if pam_shield chain exists and create if necessary
-    if [ -z "$($IPT -L pam_shield 2>/dev/null)" ] ; then
-        "$IPT" -N pam_shield
-        "$IPT" -I pam_shield -j DROP
-        [ "$TASK" = "-D" ] && return
+    # switch -A for iptables to -I (ipset not used)
+	# Or directly use add/del verbs if ipset is used
+
+    if [ "$TASK" = "-A" ]; then TASK="-I"; fi
+
+
+    # Init : in case we add an ip, check to see if pam_shield chain exists and create if necessary
+	# Common for "plain" iptables and ipset flavors
+	if echo "$TASK" | grep -Eq "(add|-[CIA]|test)"; then
+		if [ -z "$($IPT -L pam_shield 2>/dev/null)" ]; then
+			"$IPT" -N pam_shield
+			"$IPT" -I pam_shield -j DROP
+		fi
+	fi
+
+	### Init : ipset flavor
+    if echo "$TASK" | grep -Eq "(add|test)"; then
+
+        # Test if ipset (set and rule) exist
+		# If not create them as needed
+
+        "$IPT" -C INPUT -p tcp -m set --match-set "${SETN}_$IPSF" src -j pam_shield 2>/dev/null
+        IPSR=$?
+
+        if [ -z "$(ipset list -name "${SETN}_$IPSF" 2>/dev/null)" ]; then
+			ipset create "${SETN}_$IPSF" hash:ip family "$IPSF"
+        fi
+
+        if [ "$IPSR" -gt 0 ]; then
+            "$IPT" -I INPUT -p tcp -m set --match-set "${SETN}_$IPSF" src -j pam_shield
+        fi
     fi
 
-    # CUSTOMIZE THIS RULE if you want to
+
+	# Sync action
+	#
+
+	if [ "$TASK" = "-C" ]; then
+		! "$IPT" "$TASK" INPUT -p tcp -s "$2" -j pam_shield 2>/dev/null && run_iptables "-I" "$2"
+		return
+	elif [ "$TASK" = "test" ]; then
+		! ipset "$TASK" "${SETN}_$IPSF" "$2" 2>/dev/null && run_iptables "add" "$2"
+		return
+	fi
+	
+	
+    # CUSTOMIZE THIS RULE if you want toIn
     #
     # $TASK is the iptables command: -A/-I or -D
     # $2 is the IP number
@@ -48,9 +93,11 @@ run_iptables() {
     #   Currently blocks all ports
     # * add additional rules for additional services as needed
 
-    if ! "$IPT" "$TASK" INPUT -p tcp -s "$2" -j pam_shield ; then
-        [ "$TASK" = "-C" ] && run_iptables "-I" "$2"
-    fi
+    if echo "$TASK" | grep -Eq "(-[IAD])"; then
+		"$IPT" "$TASK" INPUT -p tcp -s "$2" -j pam_shield
+	elif echo "$TASK" | grep -Eq "(add|del)"; then
+		ipset "$TASK" "${SETN}_$IPSF" "$2"
+	fi
 }
 
 ### usually no editing is needed beyond this point ###
@@ -69,22 +116,26 @@ usage() {
 
 PATH=/sbin:/usr/sbin:/bin:/usr/bin
 
-[ -z "$2" ] && usage
+if [ -z "$2" ]; then usage; fi
+
+# Check if ipset is installed
+IPSI=$(which ipset 2>/dev/null)
+
 
 case "$1" in
     add)
         log "blocking $2"
-        CMD="-A"
+        if [ -n "$IPSI" ]; then CMD="add"; else CMD="-A"; fi
         ;;
 
     del)
         log "unblocking $2"
-        CMD="-D"
+        if [ -n "$IPSI" ]; then CMD="del"; else CMD="-D"; fi
         ;;
 
     sync)
         log "sync $2"
-        CMD="-C"
+        if [ -n "$IPSI" ]; then CMD="test"; else CMD="-C"; fi
         ;;
     *)
         usage
